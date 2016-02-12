@@ -1,6 +1,8 @@
 **/__pycache__
+**/stream_training
 *.pyc
 *.h5
 *.hd5
 *.cfg
 *.png
+*.avi

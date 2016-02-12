@@ -69,8 +69,6 @@ ap.add_argument("-w", "--weight", type=str, required=True,help="weights")
 ap.add_argument("-cfg", "--config", type=str, required=True,help="configuration")
 ap.add_argument("-src", "--source", type=str, required=False,choices=['video','stream'],help="video or stream")
 ap.add_argument("-l", "--lights", type=str, required=False,choices=['True','False'],help="show light coordinates or not")
-ap.add_argument("-save_train", "--save_train", type=str, required=False,choices=['True','False'],help="save data to folder for training")
-ap.add_argument("-save_video", "--save_video", type=str, required=False,choices=['True','False'],help="save data to folder for creating video")
 ap.add_argument("-video", "--video", type=str, required=False,help="video for processing")
 ap.add_argument("-slink", "--stream_link", type=str, required=False,help="stream link")
 
@@ -78,13 +76,8 @@ ap.add_argument("-slink", "--stream_link", type=str, required=False,help="stream
 args = vars(ap.parse_args())
 weights_path = args["weight"]
 config_path = args["config"]
-hoop_size = args["size"]
-col_dist = args["blue"]
 source =  "stream" if args["source"]==None else args["source"]
 show_lights = True if args["lights"]=='True' else False
-multiplier = 5 if args["skip"]==None else int(args["skip"])
-save_data_for_training = True if args["save_train"]=='True' else False
-save_data_for_video = True if args["save_video"]=='True' else False     
 video_link =  "stream2.mp4" if args["video"]==None else args["video"]
 default_stream_link = 'rtsp://admin:admin@192.168.214.40/h264.sdp?res=half&x0=0&y0=0&x1=1920&y1=1080&qp=16&doublescan=0&ssn=41645' 
 stream_link = default_stream_link if args["stream_link"]==None else args["stream_link"]
@@ -140,17 +133,17 @@ while success:
         frameId = int(round(vidcap.get(1)))
         img_count += 1
 
-        stamp = int(time.time())        
-        if save_data_for_training==True:
-            cv2.imwrite("stream_training/"+ str(stamp)+".jpg",image)
-                
+        stamp = str(time.time()).split('.')
+        stamp = stamp[0] + stamp[1]       
+        while( len(stamp)<17):
+            stamp += '0' 
         input_image = cv2.resize(image, (224, 224))
         input_image = input_image / 255.
         input_image = input_image[:,:,::-1]
         input_image = np.expand_dims(input_image, 0)
 
         netout = model.predict([input_image, dummy_array])
-        boxes = decode_netout(netout[0],obj_threshold=0.5,nms_threshold=0.05,anchors=ANCHORS,nb_class=CLASS)            
+        boxes = decode_netout(netout[0],obj_threshold=0.3,nms_threshold=0.05,anchors=ANCHORS,nb_class=CLASS)            
         
         max_score = -1
         saved_box = None
@@ -163,6 +156,7 @@ while success:
         if saved_box == None:
                 logger.info('Target not detected')
                 print('No Target')        
+                cv2.imwrite("stream_training/"+ str(stamp)+".jpg",image)
         else:
 
                 for box in boxes:
