@@ -8,13 +8,14 @@ from keras.applications import InceptionV3
 from keras.applications.vgg16 import VGG16
 from keras.applications.resnet50 import ResNet50
 
-FULL_YOLO_BACKEND_PATH  = "full_yolo_backend.h5"   # should be hosted on a server
-TINY_YOLO_BACKEND_PATH  = "tiny_yolo_backend.h5"   # should be hosted on a server
+FULL_YOLO_BACKEND_PATH  = "darknet_dock_weights.h5"   # should be hosted on a server
+TINY_YOLO_BACKEND_PATH  = "darknet_tiny_dock_weights.h5"   # should be hosted on a server
 SQUEEZENET_BACKEND_PATH = "squeezenet_backend.h5"  # should be hosted on a server
 MOBILENET_BACKEND_PATH  = "mobilenet_backend.h5"   # should be hosted on a server
 INCEPTION3_BACKEND_PATH = "inception_backend.h5"   # should be hosted on a server
 VGG16_BACKEND_PATH      = "vgg16_backend.h5"       # should be hosted on a server
 RESNET50_BACKEND_PATH   = "resnet50_backend.h5"    # should be hosted on a server
+TINIEST_BACKEND_PATH    = "Tiniest_backend_weights.h5"
 
 class BaseFeatureExtractor(object):
     """docstring for ClassName"""
@@ -164,7 +165,7 @@ class FullYoloFeature(BaseFeatureExtractor):
         x = LeakyReLU(alpha=0.1)(x)
 
         self.feature_extractor = Model(input_image, x)  
-        self.feature_extractor.load_weights(FULL_YOLO_BACKEND_PATH)
+        self.feature_extractor.load_weights(FULL_YOLO_BACKEND_PATH,by_name=True)
 
     def normalize(self, image):
         return image / 255.
@@ -200,7 +201,7 @@ class TinyYoloFeature(BaseFeatureExtractor):
             x = LeakyReLU(alpha=0.1)(x)
 
         self.feature_extractor = Model(input_image, x)  
-        self.feature_extractor.load_weights(TINY_YOLO_BACKEND_PATH)
+        self.feature_extractor.load_weights(TINY_YOLO_BACKEND_PATH, by_name=True)
 
     def normalize(self, image):
         return image / 255.
@@ -210,8 +211,8 @@ class MobileNetFeature(BaseFeatureExtractor):
     def __init__(self, input_size):
         input_image = Input(shape=(input_size, input_size, 3))
 
-        mobilenet = MobileNet(input_shape=(224,224,3), include_top=False)
-        mobilenet.load_weights(MOBILENET_BACKEND_PATH)
+        mobilenet = MobileNet(input_shape=(input_size,input_size,3), include_top=False)
+        mobilenet.load_weights(MOBILENET_BACKEND_PATH , by_name=True)
 
         x = mobilenet(input_image)
 
@@ -219,8 +220,8 @@ class MobileNetFeature(BaseFeatureExtractor):
 
     def normalize(self, image):
         image = image / 255.
-        image = image - 0.5
-        image = image * 2.
+        #image = image - 0.5
+        #image = image * 2.
 
         return image		
 
@@ -281,7 +282,73 @@ class SqueezeNetFeature(BaseFeatureExtractor):
         image[..., 1] -= 116.779
         image[..., 2] -= 123.68
 
-        return image    
+        return image 
+
+class TiniestYoloFeature(BaseFeatureExtractor):
+    def __init__(self, input_size):
+        # define some auxiliary variables and the fire module
+        sq1x1  = "squeeze1x1"
+        exp1x1 = "expand1x1"
+        exp3x3 = "expand3x3"
+        relu   = "relu_"
+
+        def fire_module(x, fire_id, squeeze=16, expand=64):
+            s_id = 'fire' + str(fire_id) + '/'
+
+            x     = Conv2D(squeeze, (1, 1), padding='valid', name=s_id + sq1x1)(x)
+            x     = Activation('relu', name=s_id + relu + sq1x1)(x)
+
+            left  = Conv2D(expand,  (1, 1), padding='valid', name=s_id + exp1x1)(x)
+            left  = Activation('relu', name=s_id + relu + exp1x1)(left)
+
+            right = Conv2D(expand,  (3, 3), padding='same',  name=s_id + exp3x3)(x)
+            right = Activation('relu', name=s_id + relu + exp3x3)(right)
+
+            x = concatenate([left, right], axis=3, name=s_id + 'concat')
+
+            return x
+
+        # define the model of SqueezeNet
+        input_layer = Input(shape=(input_size, input_size, 3))
+        # Layer 1
+        x = Conv2D(16, (3,3), strides=(1,1), padding='same', name='conv_1', use_bias=False)(input_layer)
+        x = BatchNormalization(name='norm_1')(x)
+        x = Activation('relu', name='relu_conv1')(x)
+        x = MaxPooling2D(pool_size=(2, 2))(x)
+
+        # Layer 2 - 5
+        for i in range(0,3):
+            x = Conv2D(32*(2**i), (3,3), strides=(1,1), padding='same', name='conv_' + str(i+2), use_bias=False)(x)
+            x = BatchNormalization(name='norm_' + str(i+2))(x)
+            x = Activation('relu', name='relu_conv'+(str)(i+2))(x)
+            x = MaxPooling2D(pool_size=(2, 2))(x)
+
+        x = fire_module(x, fire_id=2, squeeze=16, expand=64)
+        x = fire_module(x, fire_id=3, squeeze=16, expand=64)
+        x = MaxPooling2D(pool_size=(3, 3), strides=(2, 2), name='pool3')(x)
+
+        x = fire_module(x, fire_id=4, squeeze=32, expand=128)
+        x = fire_module(x, fire_id=5, squeeze=32, expand=128)
+        x = MaxPooling2D(pool_size=(3, 3), strides=(2, 2), name='pool5')(x)
+
+        x = fire_module(x, fire_id=6, squeeze=48, expand=192)
+        x = fire_module(x, fire_id=7, squeeze=48, expand=192)
+        x = fire_module(x, fire_id=8, squeeze=64, expand=256)
+        x = fire_module(x, fire_id=9, squeeze=64, expand=256)
+
+        self.feature_extractor = Model(input_layer, x)  
+        self.feature_extractor.load_weights(TINIEST_BACKEND_PATH, by_name=True)
+
+    def normalize(self, image):
+        """
+        image = image[..., ::-1]
+        image = image.astype('float')
+
+        image[..., 0] -= 103.939
+        image[..., 1] -= 116.779
+        image[..., 2] -= 123.68
+        """
+        return image/255.    
 
 class Inception3Feature(BaseFeatureExtractor):
     """docstring for ClassName"""

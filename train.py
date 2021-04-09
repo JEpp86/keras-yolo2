@@ -7,6 +7,13 @@ from preprocessing import parse_annotation
 from frontend import YOLO
 import json
 
+import tensorflow as tf
+from keras.backend.tensorflow_backend import set_session
+config = tf.ConfigProto()
+config.gpu_options.allow_growth = True
+sess = tf.Session(config=config)
+set_session(sess)
+
 os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"]="0"
 
@@ -94,6 +101,7 @@ def _main_(args):
                coord_scale        = config['train']['coord_scale'],
                class_scale        = config['train']['class_scale'],
                saved_weights_name = config['train']['saved_weights_name'],
+               save_model         = True,
                debug              = config['train']['debug'])
 
 if __name__ == '__main__':

@@ -1,24 +1,34 @@
-from keras.models import Model
+from keras.models import Model, model_from_json
 from keras.layers import Reshape, Activation, Conv2D, Input, MaxPooling2D, BatchNormalization, Flatten, Dense, Lambda
 from keras.layers.advanced_activations import LeakyReLU
+
 import tensorflow as tf
 import numpy as np
 import os
 import cv2
+import pickle
+import time
+
 from utils import decode_netout, compute_overlap, compute_ap
 from keras.applications.mobilenet import MobileNet
 from keras.layers.merge import concatenate
 from keras.optimizers import SGD, Adam, RMSprop
 from preprocessing import BatchGenerator
 from keras.callbacks import EarlyStopping, ModelCheckpoint, TensorBoard
-from backend import TinyYoloFeature, FullYoloFeature, MobileNetFeature, SqueezeNetFeature, Inception3Feature, VGG16Feature, ResNet50Feature
+from backend import TinyYoloFeature, FullYoloFeature, MobileNetFeature, SqueezeNetFeature, Inception3Feature, VGG16Feature, ResNet50Feature, TiniestYoloFeature
+
+def gen_norm(img):
+    img = img/255
+    return img
 
 class YOLO(object):
     def __init__(self, backend,
                        input_size, 
                        labels, 
                        max_box_per_image,
-                       anchors):
+                       anchors, 
+                       load_from_json = None,
+                       trained_weights = None):
 
         self.input_size = input_size
         
@@ -30,56 +40,71 @@ class YOLO(object):
 
         self.max_box_per_image = max_box_per_image
 
-        ##########################
-        # Make the model
-        ##########################
+        if load_from_json == None:
 
-        # make the feature extractor layers
-        input_image     = Input(shape=(self.input_size, self.input_size, 3))
-        self.true_boxes = Input(shape=(1, 1, 1, max_box_per_image , 4))  
+            ##########################
+            # Make the model
+            ##########################
 
-        if backend == 'Inception3':
-            self.feature_extractor = Inception3Feature(self.input_size)  
-        elif backend == 'SqueezeNet':
-            self.feature_extractor = SqueezeNetFeature(self.input_size)        
-        elif backend == 'MobileNet':
-            self.feature_extractor = MobileNetFeature(self.input_size)
-        elif backend == 'Full Yolo':
-            self.feature_extractor = FullYoloFeature(self.input_size)
-        elif backend == 'Tiny Yolo':
-            self.feature_extractor = TinyYoloFeature(self.input_size)
-        elif backend == 'VGG16':
-            self.feature_extractor = VGG16Feature(self.input_size)
-        elif backend == 'ResNet50':
-            self.feature_extractor = ResNet50Feature(self.input_size)
+            # make the feature extractor layers
+            input_image     = Input(shape=(self.input_size, self.input_size, 3))
+            self.true_boxes = Input(shape=(1, 1, 1, max_box_per_image , 4))  
+
+            if backend == 'Inception3':
+                self.feature_extractor = Inception3Feature(self.input_size)  
+            elif backend == 'SqueezeNet':
+                self.feature_extractor = SqueezeNetFeature(self.input_size)        
+            elif backend == 'MobileNet':
+                self.feature_extractor = MobileNetFeature(self.input_size)
+            elif backend == 'Full Yolo':
+                self.feature_extractor = FullYoloFeature(self.input_size)
+            elif backend == 'Tiny Yolo':
+                self.feature_extractor = TinyYoloFeature(self.input_size)
+            elif backend == 'VGG16':
+                self.feature_extractor = VGG16Feature(self.input_size)
+            elif backend == 'ResNet50':
+                self.feature_extractor = ResNet50Feature(self.input_size)
+            elif backend == 'Tiniest':
+                self.feature_extractor = TiniestYoloFeature(self.input_size)
+            else:
+                raise Exception('Architecture not supported! Only support Full Yolo, Tiny Yolo, MobileNet, SqueezeNet, VGG16, ResNet50, and Inception3 at the moment!')
+
+            print(self.feature_extractor.get_output_shape())    
+            self.grid_h, self.grid_w = self.feature_extractor.get_output_shape()        
+            features = self.feature_extractor.extract(input_image)            
+
+            # make the object detection layer
+            output = Conv2D(self.nb_box * (4 + 1 + self.nb_class), 
+                            (1,1), strides=(1,1), 
+                            padding='same', 
+                            name='DetectionLayer', 
+                            kernel_initializer='lecun_normal')(features)
+            output = Reshape((self.grid_h, self.grid_w, self.nb_box, 4 + 1 + self.nb_class))(output)
+            output = Lambda(lambda args: args[0])([output, self.true_boxes])
+
+            self.model = Model([input_image, self.true_boxes], output)
+
+            
+            # initialize the weights of the detection layer
+            layer = self.model.layers[-4]
+            weights = layer.get_weights()
+
+            new_kernel = np.random.normal(size=weights[0].shape)/(self.grid_h*self.grid_w)
+            new_bias   = np.random.normal(size=weights[1].shape)/(self.grid_h*self.grid_w)
+
+            layer.set_weights([new_kernel, new_bias])
+
         else:
-            raise Exception('Architecture not supported! Only support Full Yolo, Tiny Yolo, MobileNet, SqueezeNet, VGG16, ResNet50, and Inception3 at the moment!')
+            self.feature_extractor = None
+            with open(load_from_json,'rb') as f:
+                cfg = pickle.load(f)
+                self.model = model_from_json(cfg)
 
-        print(self.feature_extractor.get_output_shape())    
-        self.grid_h, self.grid_w = self.feature_extractor.get_output_shape()        
-        features = self.feature_extractor.extract(input_image)            
+            with open(trained_weights,'rb') as f:
+                weights = pickle.load(f)
+                self.model.set_weights(weights)
 
-        # make the object detection layer
-        output = Conv2D(self.nb_box * (4 + 1 + self.nb_class), 
-                        (1,1), strides=(1,1), 
-                        padding='same', 
-                        name='DetectionLayer', 
-                        kernel_initializer='lecun_normal')(features)
-        output = Reshape((self.grid_h, self.grid_w, self.nb_box, 4 + 1 + self.nb_class))(output)
-        output = Lambda(lambda args: args[0])([output, self.true_boxes])
-
-        self.model = Model([input_image, self.true_boxes], output)
-
-        
-        # initialize the weights of the detection layer
-        layer = self.model.layers[-4]
-        weights = layer.get_weights()
-
-        new_kernel = np.random.normal(size=weights[0].shape)/(self.grid_h*self.grid_w)
-        new_bias   = np.random.normal(size=weights[1].shape)/(self.grid_h*self.grid_w)
-
-        layer.set_weights([new_kernel, new_bias])
-
+        self.grid_h, self.grid_w = self.model.get_output_shape_at(-1)[1:3]
         # print a summary of the whole model
         self.model.summary()
 
@@ -255,6 +280,7 @@ class YOLO(object):
                     coord_scale,
                     class_scale,
                     saved_weights_name='best_weights.h5',
+                    save_model=False,
                     debug=False):     
 
         self.batch_size = batch_size
@@ -306,7 +332,7 @@ class YOLO(object):
 
         early_stop = EarlyStopping(monitor='val_loss', 
                            min_delta=0.001, 
-                           patience=3, 
+                           patience=10, 
                            mode='min', 
                            verbose=1)
         checkpoint = ModelCheckpoint(saved_weights_name, 
@@ -338,12 +364,27 @@ class YOLO(object):
         ############################################
         # Compute mAP on the validation set
         ############################################
-        average_precisions = self.evaluate(valid_generator)     
+
+        self.load_weights(saved_weights_name)
+
+        average_precisions, average_speed = self.evaluate(valid_generator)     
 
         # print evaluation
         for label, average_precision in average_precisions.items():
             print(self.labels[label], '{:.4f}'.format(average_precision))
-        print('mAP: {:.4f}'.format(sum(average_precisions.values()) / len(average_precisions)))         
+        print('mAP: {:.4f}'.format(sum(average_precisions.values()) / len(average_precisions)))
+        print('speed: {:.4f}'.format(average_speed))
+
+        if save_model:
+            config = self.model.to_json()
+            cfg_file = 'yolo_best_model.cfg'
+            with open(cfg_file, 'wb') as f:
+                pickle.dump(config, f)
+            #docking compatible weight file
+            weights = self.model.get_weights()
+            weight_file = 'yolo_best_weights.hd5'
+            with open(weight_file, 'wb') as f:
+                pickle.dump(weights, f)
 
     def evaluate(self, 
                  generator, 
@@ -368,7 +409,9 @@ class YOLO(object):
         all_detections     = [[None for i in range(generator.num_classes())] for j in range(generator.size())]
         all_annotations    = [[None for i in range(generator.num_classes())] for j in range(generator.size())]
 
+        predict_time = []
         for i in range(generator.size()):
+            start_time = time.time()
             raw_image = generator.load_image(i)
             raw_height, raw_width, raw_channels = raw_image.shape
 
@@ -398,7 +441,7 @@ class YOLO(object):
             # copy detections to all_annotations
             for label in range(generator.num_classes()):
                 all_annotations[i][label] = annotations[annotations[:, 4] == label, :4].copy()
-                
+            predict_time.append(time.time() - start_time)
         # compute mAP by comparing all detections and all annotations
         average_precisions = {}
         
@@ -456,12 +499,19 @@ class YOLO(object):
             average_precision  = compute_ap(recall, precision)  
             average_precisions[label] = average_precision
 
-        return average_precisions    
+            # compute average prediction speed
+            average_speed = np.mean(predict_time)
+
+        return (average_precisions, average_speed)    
 
     def predict(self, image):
         image_h, image_w, _ = image.shape
         image = cv2.resize(image, (self.input_size, self.input_size))
-        image = self.feature_extractor.normalize(image)
+        
+        if self.feature_extractor == None:
+            image = gen_norm(image)
+        else:
+            image = self.feature_extractor.normalize(image)
 
         input_image = image[:,:,::-1]
         input_image = np.expand_dims(input_image, 0)
@@ -471,3 +521,38 @@ class YOLO(object):
         boxes  = decode_netout(netout, self.anchors, self.nb_class)
 
         return boxes
+
+    def get_generator_from_data(self, validation_data):
+        generator_config = {
+            'IMAGE_H'         : self.input_size, 
+            'IMAGE_W'         : self.input_size,
+            'GRID_H'          : self.grid_h,  
+            'GRID_W'          : self.grid_w,
+            'BOX'             : self.nb_box,
+            'LABELS'          : self.labels,
+            'CLASS'           : len(self.labels),
+            'ANCHORS'         : self.anchors,
+            'BATCH_SIZE'      : self.batch_size,
+            'TRUE_BOX_BUFFER' : self.max_box_per_image,
+        }
+
+        valid_generator = BatchGenerator(validation_data, 
+                             generator_config, 
+                             norm=gen_norm,
+                             jitter=False)
+
+        return valid_generator
+        """
+        average_precisions, average_speed = self.evaluate(valid_generator)     
+
+        # print evaluation
+        for label, average_precision in average_precisions.items():
+            print(self.labels[label], '{:.4f}'.format(average_precision))
+        print('mAP: {:.4f}'.format(sum(average_precisions.values()) / len(average_precisions)))
+        print('speed: {:.4f}'.format(average_speed))
+        """
+    def set_batch(self, batch_size):
+        self.batch_size = batch_size
+
+    def get_label(self,label):
+        return self.labels[label]
