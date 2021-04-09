@@ -365,7 +365,7 @@ class YOLO(object):
         # Compute mAP on the validation set
         ############################################
 
-        self.load_weights(saved_weights_name)
+        #self.load_weights(saved_weights_name)
 
         average_precisions, average_speed = self.evaluate(valid_generator)     
 

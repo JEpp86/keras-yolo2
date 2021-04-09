@@ -11,7 +11,7 @@ from keras.applications.resnet50 import ResNet50
 FULL_YOLO_BACKEND_PATH  = "darknet_dock_weights.h5"   # should be hosted on a server
 TINY_YOLO_BACKEND_PATH  = "darknet_tiny_dock_weights.h5"   # should be hosted on a server
 SQUEEZENET_BACKEND_PATH = "squeezenet_backend.h5"  # should be hosted on a server
-MOBILENET_BACKEND_PATH  = "mobilenet_backend.h5"   # should be hosted on a server
+MOBILENET_BACKEND_PATH  = "MobileNet_backend_weights.h5"   # should be hosted on a server
 INCEPTION3_BACKEND_PATH = "inception_backend.h5"   # should be hosted on a server
 VGG16_BACKEND_PATH      = "vgg16_backend.h5"       # should be hosted on a server
 RESNET50_BACKEND_PATH   = "resnet50_backend.h5"    # should be hosted on a server

@@ -1,6 +1,6 @@
 {
     "model" : {
-        "backend":              "Tiniest",
+        "backend":              "Full Yolo",
         "input_size":           224,
         "anchors":              [1.05,1.68, 1.35,2.06, 1.50,2.40, 1.85,2.82],
         "max_box_per_image":    10,        
@@ -12,18 +12,18 @@
         "train_annot_folder":   "/home/nvidia/docking_training/data/annotation_voc/",     
           
         "train_times":          1,
-        "pretrained_weights":   "",
+        "pretrained_weights":   "full_yolo_darknet_1.h5",
         "batch_size":           16,
         "learning_rate":        1e-4,
         "nb_epochs":            80,
         "warmup_epochs":        3,
 
-        "object_scale":         8.0 ,
+        "object_scale":         5.0 ,
         "no_object_scale":      1.0,
         "coord_scale":          1.0,
         "class_scale":          1.0,
 
-        "saved_weights_name":   "Tiniest_yolo",
+        "saved_weights_name":   "full_yolo_darknet.h5",
         "debug":                false 
     },
 
