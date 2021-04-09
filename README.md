@@ -2,42 +2,6 @@
 
 This repo contains the implementation of YOLOv2 in Keras with Tensorflow backend. It supports training YOLOv2 network with various backends such as MobileNet and InceptionV3. Links to demo applications are shown below. Check out https://experiencor.github.io/yolo_demo/demo.html for a Raccoon Detector demo run entirely in brower with DeepLearn.js and MobileNet backend (it somehow breaks in Window). Source code of this demo is located at https://git.io/vF7vG.
 
-## Todo list:
-- [x] Warmup training
-- [x] Raccoon detection, Self-driving car, and Kangaroo detection
-- [x] SqueezeNet, MobileNet, InceptionV3, and ResNet50 backends
-- [x] Support python 2.7 and 3.6
-- [ ] Multiple-GPU training
-- [ ] Multiscale training
-- [ ] mAP Evaluation
-
-## Some example applications (click for videos):
-
-### Raccon detection
-<a href="https://www.youtube.com/watch?v=aibuvj2-zxA" rel="some text"><p align="center"><img src="https://i.imgur.com/6okeDjz.jpg" height="300"></p></a>
-
-Dataset => https://github.com/experiencor/raccoon_dataset
-
-### Kangaroo detection
-<a href="https://youtu.be/vjmFzEP1qZw?t=34" rel="some text"><p align="center"><img src="https://i.imgur.com/v606VZX.jpg" height="300"></p></a>
-
-Dataset => https://github.com/experiencor/kangaroo
-
-### Self-driving Car
-<a href="https://www.youtube.com/watch?v=oYCaILZxEWM" rel="some text"><p align="center"><img src="https://i.imgur.com/kEc9ptL.jpg" height="300"></p></a>
-
-Dataset => http://cocodataset.org/#detections-challenge2017
-
-### Red blod cell detection
-<a href="https://www.youtube.com/watch?v=oYCaILZxEWM" rel="some text"><p align="center"><img src="https://i.imgur.com/1vmIJKL.jpg" height="300"></p></a>
-
-Dataset => https://github.com/cosmicad/dataset
-
-### Hand detection
-<a href="https://www.youtube.com/watch?v=p3-3kN_fIz0" rel="some text"><p align="center"><img src="https://i.imgur.com/75imQQz.jpg" height="300"></p></a>
-
-Dataset => http://cvrr.ucsd.edu/vivachallenge/index.php/hands/hand-detection/
-
 ## Usage for python code
 
 ### 0. Requirement
@@ -45,6 +9,8 @@ Dataset => http://cvrr.ucsd.edu/vivachallenge/index.php/hands/hand-detection/
 python 2.7
 
 keras >= 2.0.8
+
+tensorflow 1.x
 
 imgaug
 
@@ -105,19 +71,7 @@ The configuration file is a json file, which looks like this:
 
 ```
 
-The model section defines the type of the model to construct as well as other parameters of the model such as the input image size and the list of anchors. The ```labels``` setting lists the labels to be trained on. Only images, which has labels being listed, are fed to the network. The rest images are simply ignored. By this way, a Dog Detector can easily be trained using VOC or COCO dataset by setting ```labels``` to ```['dog']```.
-
-Download pretrained weights for backend (tiny yolo, full yolo, squeezenet, mobilenet, and inceptionV3) at:
-
-https://drive.google.com/drive/folders/10oym4eL2RxJa0gro26vzXK__TtYOP5Ng
-
-**These weights must be put in the root folder of the repository. They are the pretrained weights for the backend only and will be loaded during model creation. The code does not work without these weights.**
-
-The link to the pretrained weights for the whole model (both frontend and backend) of the raccoon detector can be downloaded at:
-
-https://drive.google.com/drive/folders/10oym4eL2RxJa0gro26vzXK__TtYOP5Ng
-
-These weights can be used as the pretrained weights for any one class object detectors.
+The model section defines the type of the model to construct as well as other parameters of the model such as the input image size and the list of anchors. The ```labels``` setting lists the labels to be trained on. Only images, which has labels being listed, are fed to the network. The rest images are simply ignored.
 
 ### 3. Generate anchors for your dataset (optional)
 
@@ -135,10 +89,6 @@ By the end of this process, the code will write the weights of the best model to
 `python predict.py -c config.json -w /path/to/best_weights.h5 -i /path/to/image/or/video`
 
 It carries out detection on the image and write the image with detected bounding boxes to the same folder.
-
-## Usage for jupyter notebook
-
-Refer to the notebook (https://github.com/experiencor/basic-yolo-keras/blob/master/Yolo%20Step-by-Step.ipynb) for a complete walk-through implementation of YOLOv2 from scratch (training, testing, and scoring).
 
 ## Evaluation of the current implementation:
 
