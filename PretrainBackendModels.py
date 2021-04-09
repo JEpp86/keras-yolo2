@@ -22,7 +22,12 @@ from keras import backend as K
 from keras import optimizers
 
 from backend_models import full_darknet, tiny_darknet, squeezenet, tiniest_yolo
-
+import tensorflow as tf
+from keras.backend.tensorflow_backend import set_session
+config = tf.ConfigProto()
+config.gpu_options.allow_growth = True
+sess = tf.Session(config=config)
+set_session(sess)
 
 import numpy as np
 import argparse
@@ -31,7 +36,8 @@ import os, os.path
 import random
 import argparse
 
-
+os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
+os.environ["CUDA_VISIBLE_DEVICES"]="0"
 
 import matplotlib
 import matplotlib.pyplot as plt
