@@ -188,18 +188,13 @@ def squeezenet(input_layer):
         return x
 
     # define the model of SqueezeNet
-
-    x = Conv2D(64, (3, 3), strides=(2, 2), padding='valid', name='conv1')(input_layer)
-    x = Activation('relu', name='relu_conv1')(x)
-    x = MaxPooling2D(pool_size=(3, 3), strides=(2, 2), name='pool1')(x)
-
     x = fire_module(x, fire_id=2, squeeze=16, expand=64)
     x = fire_module(x, fire_id=3, squeeze=16, expand=64)
-    x = MaxPooling2D(pool_size=(3, 3), strides=(2, 2), name='pool3')(x)
+    x = MaxPooling2D(pool_size=(2, 2), strides=(2, 2), name='pool3')(x)
 
     x = fire_module(x, fire_id=4, squeeze=32, expand=128)
     x = fire_module(x, fire_id=5, squeeze=32, expand=128)
-    x = MaxPooling2D(pool_size=(3, 3), strides=(2, 2), name='pool5')(x)
+    x = MaxPooling2D(pool_size=(2, 2), strides=(2, 2), name='pool5')(x)
 
     x = fire_module(x, fire_id=6, squeeze=48, expand=192)
     x = fire_module(x, fire_id=7, squeeze=48, expand=192)
@@ -240,8 +235,8 @@ def tiniest_yolo(input_layer):
     x = Activation('relu', name='relu_conv1')(x)
     x = MaxPooling2D(pool_size=(2, 2))(x)
 
-    # Layer 2 - 5
-    for i in range(0,3):
+    # Layer 2 - 3
+    for i in range(0,2):
         x = Conv2D(32*(2**i), (3,3), strides=(1,1), padding='same', name='conv_' + str(i+2), use_bias=False)(x)
         x = BatchNormalization(name='norm_' + str(i+2))(x)
         x = Activation('relu', name='relu_conv'+(str)(i+2))(x)
@@ -249,11 +244,11 @@ def tiniest_yolo(input_layer):
 
     x = fire_module(x, fire_id=2, squeeze=16, expand=64)
     x = fire_module(x, fire_id=3, squeeze=16, expand=64)
-    x = MaxPooling2D(pool_size=(3, 3), strides=(2, 2), name='pool3')(x)
+    x = MaxPooling2D(pool_size=(2, 2), strides=(2, 2), name='pool3')(x)
 
     x = fire_module(x, fire_id=4, squeeze=32, expand=128)
     x = fire_module(x, fire_id=5, squeeze=32, expand=128)
-    x = MaxPooling2D(pool_size=(3, 3), strides=(2, 2), name='pool5')(x)
+    x = MaxPooling2D(pool_size=(2, 2), strides=(2, 2), name='pool5')(x)
 
     x = fire_module(x, fire_id=6, squeeze=48, expand=192)
     x = fire_module(x, fire_id=7, squeeze=48, expand=192)

@@ -183,7 +183,7 @@ print('model saved')
 # list all data in history
 print(history.history.keys())
 # summarize history for accuracy
-plt.plot(history.history['accuracy'])
+plt.plot(history.history['acc'])
 plt.plot(history.history['val_acc'])
 plt.ylabel('accuracy')
 plt.xlabel('epoch')
