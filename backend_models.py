@@ -163,6 +163,22 @@ def tiny_darknet(input_layer):
 
     return x
 
+def fire_module(x, fire_id, squeeze=16, expand=64):
+        s_id = 'fire' + str(fire_id) + '/'
+
+        x     = Conv2D(squeeze, (1, 1), padding='valid', name=s_id + sq1x1)(x)
+        x     = Activation('relu', name=s_id + relu + sq1x1)(x)
+
+        left  = Conv2D(expand,  (1, 1), padding='valid', name=s_id + exp1x1)(x)
+        left  = Activation('relu', name=s_id + relu + exp1x1)(left)
+
+        right = Conv2D(expand,  (3, 3), padding='same',  name=s_id + exp3x3)(x)
+        right = Activation('relu', name=s_id + relu + exp3x3)(right)
+
+        x = concatenate([left, right], axis=3, name=s_id + 'concat')
+
+        return x
+
 def squeezenet(input_layer):
 
     # define some auxiliary variables and the fire module
@@ -171,30 +187,17 @@ def squeezenet(input_layer):
     exp3x3 = "expand3x3"
     relu   = "relu_"
 
-    def fire_module(x, fire_id, squeeze=16, expand=64):
-        s_id = 'fire' + str(fire_id) + '/'
+    x = Conv2D(64, (3, 3), strides=(2, 2), padding='valid', name='conv1')(input_image)
+    x = Activation('relu', name='relu_conv1')(x)
+    x = MaxPooling2D(pool_size=(3, 3), strides=(2, 2), name='pool1')(x)
 
-        x     = Conv2D(squeeze, (1, 1), padding='valid', name=s_id + sq1x1)(x)
-        x     = Activation('relu', name=s_id + relu + sq1x1)(x)
-
-        left  = Conv2D(expand,  (1, 1), padding='valid', name=s_id + exp1x1)(x)
-        left  = Activation('relu', name=s_id + relu + exp1x1)(left)
-
-        right = Conv2D(expand,  (3, 3), padding='same',  name=s_id + exp3x3)(x)
-        right = Activation('relu', name=s_id + relu + exp3x3)(right)
-
-        x = concatenate([left, right], axis=3, name=s_id + 'concat')
-
-        return x
-
-    # define the model of SqueezeNet
     x = fire_module(x, fire_id=2, squeeze=16, expand=64)
     x = fire_module(x, fire_id=3, squeeze=16, expand=64)
-    x = MaxPooling2D(pool_size=(2, 2), strides=(2, 2), name='pool3')(x)
+    x = MaxPooling2D(pool_size=(3, 3), strides=(2, 2), name='pool3')(x)
 
     x = fire_module(x, fire_id=4, squeeze=32, expand=128)
     x = fire_module(x, fire_id=5, squeeze=32, expand=128)
-    x = MaxPooling2D(pool_size=(2, 2), strides=(2, 2), name='pool5')(x)
+    x = MaxPooling2D(pool_size=(3, 3), strides=(2, 2), name='pool5')(x)
 
     x = fire_module(x, fire_id=6, squeeze=48, expand=192)
     x = fire_module(x, fire_id=7, squeeze=48, expand=192)
@@ -203,29 +206,13 @@ def squeezenet(input_layer):
 
     return x
 
-def tiniest_yolo(input_layer):
+def tiniest_yolo_32x(input_layer):
 
     # define some auxiliary variables and the fire module
     sq1x1  = "squeeze1x1"
     exp1x1 = "expand1x1"
     exp3x3 = "expand3x3"
     relu   = "relu_"
-
-    def fire_module(x, fire_id, squeeze=16, expand=64):
-        s_id = 'fire' + str(fire_id) + '/'
-
-        x     = Conv2D(squeeze, (1, 1), padding='valid', name=s_id + sq1x1)(x)
-        x     = Activation('relu', name=s_id + relu + sq1x1)(x)
-
-        left  = Conv2D(expand,  (1, 1), padding='valid', name=s_id + exp1x1)(x)
-        left  = Activation('relu', name=s_id + relu + exp1x1)(left)
-
-        right = Conv2D(expand,  (3, 3), padding='same',  name=s_id + exp3x3)(x)
-        right = Activation('relu', name=s_id + relu + exp3x3)(right)
-
-        x = concatenate([left, right], axis=3, name=s_id + 'concat')
-
-        return x
 
     # define the model of SqueezeNet
 
@@ -256,3 +243,34 @@ def tiniest_yolo(input_layer):
     x = fire_module(x, fire_id=9, squeeze=64, expand=256)
 
     return x
+
+def tiniest_yolo_v1(input_layer):
+        # Layer 1
+    x = Conv2D(16, (3,3), strides=(1,1), padding='same', name='conv_1', use_bias=False)(input_layer)
+    x = BatchNormalization(name='norm_1')(x)
+    x = Activation('relu', name='relu_conv1')(x)
+    x = MaxPooling2D(pool_size=(2, 2))(x)
+
+    # Layer 2 - 3
+    for i in range(0,2):
+        x = Conv2D(32*(2**i), (3,3), strides=(1,1), padding='same', name='conv_' + str(i+2), use_bias=False)(x)
+        x = BatchNormalization(name='norm_' + str(i+2))(x)
+        x = Activation('relu', name='relu_conv'+(str)(i+2))(x)
+        x = MaxPooling2D(pool_size=(2, 2))(x)
+
+    x = Conv2D(64, (3, 3), strides=(2, 2), padding='valid', name='conv1')(x)
+    x = Activation('relu', name='relu_conv1')(x)
+    x = MaxPooling2D(pool_size=(3, 3), strides=(2, 2), name='pool1')(x)
+
+    x = fire_module(x, fire_id=2, squeeze=16, expand=64)
+    x = fire_module(x, fire_id=3, squeeze=16, expand=64)
+    x = MaxPooling2D(pool_size=(3, 3), strides=(2, 2), name='pool3')(x)
+
+    x = fire_module(x, fire_id=4, squeeze=32, expand=128)
+    x = fire_module(x, fire_id=5, squeeze=32, expand=128)
+    x = MaxPooling2D(pool_size=(3, 3), strides=(2, 2), name='pool5')(x)
+
+    x = fire_module(x, fire_id=6, squeeze=48, expand=192)
+    x = fire_module(x, fire_id=7, squeeze=48, expand=192)
+    x = fire_module(x, fire_id=8, squeeze=64, expand=256)
+    x = fire_module(x, fire_id=9, squeeze=64, expand=256)
