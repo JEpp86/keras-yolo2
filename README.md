@@ -15,7 +15,6 @@ tensorflow 1.x
 imgaug
 
 ### 1. Data preparation
-Download the Raccoon dataset from from https://github.com/experiencor/raccoon_dataset.
 
 Organize the dataset into 4 folders:
 
