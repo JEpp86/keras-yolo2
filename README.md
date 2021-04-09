@@ -6,7 +6,7 @@ This repo contains the implementation of YOLOv2 in Keras with Tensorflow backend
 
 ### 0. Requirement
 
-python 2.7
+python 3.5
 
 keras >= 2.0.8
 
