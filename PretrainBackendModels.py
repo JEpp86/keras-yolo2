@@ -162,7 +162,7 @@ model.summary()
 
 
 # ---- train the model ----
-batch_size = 16
+batch_size = 5 
 num_epochs = 10
 
 history = model.fit_generator(datagen.flow(x_train, y_train, batch_size=batch_size),

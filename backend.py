@@ -9,7 +9,7 @@ from keras.applications.vgg16 import VGG16
 from keras.applications.resnet50 import ResNet50
 
 FULL_YOLO_BACKEND_PATH  = "darknet_dock_weights.h5"   # should be hosted on a server
-TINY_YOLO_BACKEND_PATH  = "darknet_tiny_dock_weights.h5"   # should be hosted on a server
+TINY_YOLO_BACKEND_PATH  = "TinyDN_backend_weights.h5"   # should be hosted on a server
 SQUEEZENET_BACKEND_PATH = "squeezenet_backend.h5"  # should be hosted on a server
 MOBILENET_BACKEND_PATH  = "MobileNet_backend_weights.h5"   # should be hosted on a server
 INCEPTION3_BACKEND_PATH = "inception_backend.h5"   # should be hosted on a server
@@ -338,6 +338,7 @@ class TiniestYoloFeature(BaseFeatureExtractor):
 
         self.feature_extractor = Model(input_layer, x)  
         self.feature_extractor.load_weights(TINIEST_BACKEND_PATH, by_name=True)
+        self.feature_extractor.summary()
 
     def normalize(self, image):
         """

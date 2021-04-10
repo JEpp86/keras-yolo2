@@ -1,7 +1,8 @@
 #some backend models unavalaible to keras, from https://github.com/experiencor/keras-yolo2
+import tensorflow as tf
 from keras.layers import Conv2D, MaxPooling2D
 from keras.layers import Activation, Dropout, Flatten, Dense
-from keras.layers import Activation, BatchNormalization
+from keras.layers import Activation, BatchNormalization, Lambda
 from keras.layers.advanced_activations import LeakyReLU
 from keras.layers.merge import concatenate
 
@@ -164,6 +165,10 @@ def tiny_darknet(input_layer):
     return x
 
 def fire_module(x, fire_id, squeeze=16, expand=64):
+        sq1x1  = "squeeze1x1"
+        exp1x1 = "expand1x1"
+        exp3x3 = "expand3x3"
+        relu   = "relu_"
         s_id = 'fire' + str(fire_id) + '/'
 
         x     = Conv2D(squeeze, (1, 1), padding='valid', name=s_id + sq1x1)(x)
@@ -206,7 +211,7 @@ def squeezenet(input_layer):
 
     return x
 
-def tiniest_yolo_32x(input_layer):
+def tiniest_yolo(input_layer):
 
     # define some auxiliary variables and the fire module
     sq1x1  = "squeeze1x1"

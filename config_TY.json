@@ -12,7 +12,7 @@
         "train_annot_folder":   "/home/nvidia/docking_training/data/annotation_voc/",     
           
         "train_times":          1,
-        "pretrained_weights":   "tiny_yolo_darknet.h5",
+        "pretrained_weights":   "",
         "batch_size":           16,
         "learning_rate":        1e-4,
         "nb_epochs":            80,
