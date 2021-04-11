@@ -225,27 +225,27 @@ def tiniest_yolo(input_layer):
     x = Conv2D(16, (3,3), strides=(1,1), padding='same', name='conv_1', use_bias=False)(input_layer)
     x = BatchNormalization(name='norm_1')(x)
     x = Activation('relu', name='relu_conv1')(x)
-    x = MaxPooling2D(pool_size=(2, 2))(x)
+    x = MaxPooling2D(pool_size=(2, 2), strides=(2,2), name='pool1')(x)
 
     # Layer 2 - 3
     for i in range(0,2):
         x = Conv2D(32*(2**i), (3,3), strides=(1,1), padding='same', name='conv_' + str(i+2), use_bias=False)(x)
         x = BatchNormalization(name='norm_' + str(i+2))(x)
         x = Activation('relu', name='relu_conv'+(str)(i+2))(x)
-        x = MaxPooling2D(pool_size=(2, 2))(x)
+        x = MaxPooling2D(pool_size=(2, 2), strides=(2,2), name='pool2')(x)
 
+    x = fire_module(x, fire_id=1, squeeze=16, expand=64)
     x = fire_module(x, fire_id=2, squeeze=16, expand=64)
-    x = fire_module(x, fire_id=3, squeeze=16, expand=64)
     x = MaxPooling2D(pool_size=(2, 2), strides=(2, 2), name='pool3')(x)
 
+    x = fire_module(x, fire_id=3, squeeze=32, expand=128)
     x = fire_module(x, fire_id=4, squeeze=32, expand=128)
-    x = fire_module(x, fire_id=5, squeeze=32, expand=128)
-    x = MaxPooling2D(pool_size=(2, 2), strides=(2, 2), name='pool5')(x)
+    x = MaxPooling2D(pool_size=(2, 2), strides=(2, 2), name='pool4')(x)
 
+    x = fire_module(x, fire_id=5, squeeze=48, expand=192)
     x = fire_module(x, fire_id=6, squeeze=48, expand=192)
-    x = fire_module(x, fire_id=7, squeeze=48, expand=192)
+    x = fire_module(x, fire_id=7, squeeze=64, expand=256)
     x = fire_module(x, fire_id=8, squeeze=64, expand=256)
-    x = fire_module(x, fire_id=9, squeeze=64, expand=256)
 
     return x
 
