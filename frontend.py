@@ -374,7 +374,10 @@ class YOLO(object):
             print(self.labels[label], '{:.4f}'.format(average_precision))
         print('mAP: {:.4f}'.format(sum(average_precisions.values()) / len(average_precisions)))
         print('speed: {:.4f}'.format(average_speed))
-
+        
+        self.model.save_weights(saved_weights_name)
+	
+        
         if save_model:
             config = self.model.to_json()
             cfg_file = 'yolo_best_model.cfg'

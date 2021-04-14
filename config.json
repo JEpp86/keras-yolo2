@@ -12,7 +12,7 @@
         "train_annot_folder":   "/home/nvidia/docking_training/data/annotation_voc/",     
           
         "train_times":          1,
-        "pretrained_weights":   "",
+        "pretrained_weights":   "Tiniest_yolo.h5",
         "batch_size":           16,
         "learning_rate":        1e-4,
         "nb_epochs":            80,
@@ -23,7 +23,7 @@
         "coord_scale":          1.0,
         "class_scale":          1.0,
 
-        "saved_weights_name":   "Tiniest_yolo",
+        "saved_weights_name":   "Tiniest_yolo.h5",
         "debug":                false 
     },
 
