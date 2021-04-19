@@ -1,6 +1,6 @@
 # YOLOv2 in Keras and Applications
 
-This repo contains the implementation of YOLOv2 in Keras with Tensorflow backend. It supports training YOLOv2 network with various backends such as MobileNet and InceptionV3. Links to demo applications are shown below. Check out https://experiencor.github.io/yolo_demo/demo.html for a Raccoon Detector demo run entirely in brower with DeepLearn.js and MobileNet backend (it somehow breaks in Window). Source code of this demo is located at https://git.io/vF7vG.
+This repo contains the implementation of YOLOv2 in Keras with Tensorflow backend. It supports training YOLOv2 network with various backends such as MobileNet and InceptionV3, as well as Very Tiny YOLO model developed for embedded appications. This repo was used as a basis for Deep Learning Systems in Engineering project
 
 ## Usage for python code
 
@@ -15,18 +15,18 @@ tensorflow 1.x
 imgaug
 
 ### 1. Data preparation
+dataset can be found here:
 
-Organize the dataset into 4 folders:
+https://drive.google.com/file/d/1adfK0OyuQiaBN9gPpGSt9CeiuoQqTppC/view?usp=sharing
 
-+ train_image_folder <= the folder that contains the train images.
+Organize the dataset into 2 folders:
 
-+ train_annot_folder <= the folder that contains the train annotations in VOC format.
++ ../data/training <= the folder that contains the train images.
++ ../data/annotation_voc <= the folder that contains the train annotations in VOC format.
 
-+ valid_image_folder <= the folder that contains the validation images.
+relative to the project root dierctory, or modify the configuration file based of instuctions below
 
-+ valid_annot_folder <= the folder that contains the validation annotations in VOC format.
-    
-There is a one-to-one correspondence by file name between images and annotations. If the validation set is empty, the training set will be automatically splitted into the training set and validation set using the ratio of 0.8.
+There is a one-to-one correspondence by file name between images and annotations. If the validation set is empty, the training set will be automatically split into the training set and validation set using the ratio of 0.8.
 
 ### 2. Edit the configuration file
 The configuration file is a json file, which looks like this:
@@ -78,24 +78,49 @@ The model section defines the type of the model to construct as well as other pa
 
 Copy the generated anchors printed on the terminal to the ```anchors``` setting in ```config.json```.
 
-### 4. Start the training process
+### 4. Pretrain the model
+ensure the data from the data zip is on the followig location:
+
+../data/Dock 
+../data/NotDock
+
+data is avalable at: https://drive.google.com/file/d/1adfK0OyuQiaBN9gPpGSt9CeiuoQqTppC/view?usp=sharing
+
+to run pretraining use
+`python PretrainBackendModels.py [-option]`
+
+to pretrain the very tiny YOLO model run 
+`python PretrainBackendModels.py -ts`
+
+Note: if a backend modek isn't pretrained before attempting training the model will fail at creating in the train script. training can be done without pretraining backend by commenting out model load in backend.py. The result of not pretraining the classification model are generally poor and in some cases might not converge 
+
+
+### 5. Start the training process
 
 `python train.py -c config.json`
 
-By the end of this process, the code will write the weights of the best model to file best_weights.h5 (or whatever name specified in the setting "saved_weights_name" in the config.json file). The training process stops when the loss on the validation set is not improved in 3 consecutive epoches.
+By the end of this process, the code will write the weights of the best model to file best_weights.h5 (or whatever name specified in the setting "saved_weights_name" in the config.json file). The training process stops when the loss on the validation set is not improved in 6 consecutive epochs.
 
-### 5. Perform detection using trained weights on an image by running
+Not there are a number of preconfigured config files in the repor from comparative testing.
+
+### 6. Perform detection using trained weights on an image by running
+Using demo code matching project (using json model cfg, and hd5 weights file)
+'sh run_demo.sh' for final model and wights
+from python directly:
+
+`python docking_demo.py -cfg <model.cfg> -w <weights.hd5> -src video -video dockvideo.avi` 
+
+for testing various models
+
+This carries out detection while also measuring statistics. This will save images to stream_training/ directory in project root folder
+
+As provided in previous repo (.h5 file and training config) 
 `python predict.py -c config.json -w /path/to/best_weights.h5 -i /path/to/image/or/video`
 
 It carries out detection on the image and write the image with detected bounding boxes to the same folder.
 
-## Evaluation of the current implementation:
+Note that some models are unable to load the .h5 due to a bug in ModelCheckpoint saving. This is not the case with the json cfg and hd5 weights
 
-| Train        | Test          | mAP (with this implementation) | mAP (on released weights) |
-| -------------|:--------------|:------------------------:|:-------------------------:|
-| COCO train   | COCO val      | 28.6 |    42.1 |
-
-The code to evaluate detection results can be found at https://github.com/experiencor/basic-yolo-keras/issues/27.
 
 ## Copyright
 
