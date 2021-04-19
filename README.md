@@ -17,6 +17,8 @@ imgaug
 ### 1. Data preparation
 dataset can be found here:
 
+https://drive.google.com/file/d/1adfK0OyuQiaBN9gPpGSt9CeiuoQqTppC/view?usp=sharing
+
 Organize the dataset into 2 folders:
 
 + ../data/training <= the folder that contains the train images.
@@ -83,10 +85,10 @@ https://drive.google.com/file/d/1adfK0OyuQiaBN9gPpGSt9CeiuoQqTppC/view?usp=shari
 ../data/NotDock
 
 to run pretraining use
-'python PretrainBackendModels.py [-option]'
+`python PretrainBackendModels.py [-option]`
 
 to pretrain the very tiny YOLO model run 
-'python PretrainBackendModels.py -ts
+`python PretrainBackendModels.py -ts`
 
 Note: if a backend modek isn't pretrained before attempting training the model will fail at creating in the train script.
 
@@ -95,13 +97,15 @@ Note: if a backend modek isn't pretrained before attempting training the model w
 
 `python train.py -c config.json`
 
-By the end of this process, the code will write the weights of the best model to file best_weights.h5 (or whatever name specified in the setting "saved_weights_name" in the config.json file). The training process stops when the loss on the validation set is not improved in 3 consecutive epoches.
+By the end of this process, the code will write the weights of the best model to file best_weights.h5 (or whatever name specified in the setting "saved_weights_name" in the config.json file). The training process stops when the loss on the validation set is not improved in 6 consecutive epochs.
 
 ### 6. Perform detection using trained weights on an image by running
 Using demo code matching project (using json model cfg, and hd5 weights file)
 'sh run_demo.sh' for final model and wights
 from python directly:
-python docking_demo.py -cfg <model.cfg> -w <weights.hd5> -src video -video dockvideo.avi 
+
+`python docking_demo.py -cfg <model.cfg> -w <weights.hd5> -src video -video dockvideo.avi` 
+
 for testing various models
 
 This carries out detection while also measuring statistics. This will save images to stream_training/ directory in project root folder
