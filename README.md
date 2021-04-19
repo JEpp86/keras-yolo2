@@ -79,10 +79,12 @@ The model section defines the type of the model to construct as well as other pa
 Copy the generated anchors printed on the terminal to the ```anchors``` setting in ```config.json```.
 
 ### 4. Pretrain the model
-unsure the data from the data zip is on the followig location:
-https://drive.google.com/file/d/1adfK0OyuQiaBN9gPpGSt9CeiuoQqTppC/view?usp=sharing
+ensure the data from the data zip is on the followig location:
+
 ../data/Dock 
 ../data/NotDock
+
+data is avalable at: https://drive.google.com/file/d/1adfK0OyuQiaBN9gPpGSt9CeiuoQqTppC/view?usp=sharing
 
 to run pretraining use
 `python PretrainBackendModels.py [-option]`
@@ -90,7 +92,7 @@ to run pretraining use
 to pretrain the very tiny YOLO model run 
 `python PretrainBackendModels.py -ts`
 
-Note: if a backend modek isn't pretrained before attempting training the model will fail at creating in the train script.
+Note: if a backend modek isn't pretrained before attempting training the model will fail at creating in the train script. training can be done without pretraining backend by commenting out model load in backend.py. The result of not pretraining the classification model are generally poor and in some cases might not converge 
 
 
 ### 5. Start the training process
@@ -98,6 +100,8 @@ Note: if a backend modek isn't pretrained before attempting training the model w
 `python train.py -c config.json`
 
 By the end of this process, the code will write the weights of the best model to file best_weights.h5 (or whatever name specified in the setting "saved_weights_name" in the config.json file). The training process stops when the loss on the validation set is not improved in 6 consecutive epochs.
+
+Not there are a number of preconfigured config files in the repor from comparative testing.
 
 ### 6. Perform detection using trained weights on an image by running
 Using demo code matching project (using json model cfg, and hd5 weights file)
@@ -114,6 +118,8 @@ As provided in previous repo (.h5 file and training config)
 `python predict.py -c config.json -w /path/to/best_weights.h5 -i /path/to/image/or/video`
 
 It carries out detection on the image and write the image with detected bounding boxes to the same folder.
+
+Note that some models are unable to load the .h5 due to a bug in ModelCheckpoint saving. This is not the case with the json cfg and hd5 weights
 
 
 ## Copyright
