@@ -1,4 +1,4 @@
-# YOLOv2 in Keras and Applications
+# YOLOv2 in Keras For autonomous docking application
 
 This repo contains the implementation of YOLOv2 in Keras with Tensorflow backend. It supports training YOLOv2 network with various backends such as MobileNet and InceptionV3, as well as Very Tiny YOLO model developed for embedded appications. This repo was used as a basis for Deep Learning Systems in Engineering project
 
