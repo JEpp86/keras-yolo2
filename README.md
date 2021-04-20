@@ -81,7 +81,8 @@ Copy the generated anchors printed on the terminal to the ```anchors``` setting 
 ### 4. Pretrain the model
 ensure the data from the data zip is on the followig location:
 
-../data/Dock 
+../data/Dock
+
 ../data/NotDock
 
 data is avalable at: https://drive.google.com/file/d/1adfK0OyuQiaBN9gPpGSt9CeiuoQqTppC/view?usp=sharing
@@ -105,7 +106,8 @@ Not there are a number of preconfigured config files in the repor from comparati
 
 ### 6. Perform detection using trained weights on an image by running
 Using demo code matching project (using json model cfg, and hd5 weights file)
-'sh run_demo.sh' for final model and wights
+`sh run_demo.sh` 
+for final model and wights
 from python directly:
 
 `python docking_demo.py -cfg <model.cfg> -w <weights.hd5> -src video -video dockvideo.avi` 
